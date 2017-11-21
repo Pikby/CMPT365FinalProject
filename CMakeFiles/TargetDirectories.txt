@@ -1,0 +1,3 @@
+/media/kibby/WorkSpace/CMPT365FinalProj/CMakeFiles/edit_cache.dir
+/media/kibby/WorkSpace/CMPT365FinalProj/CMakeFiles/rebuild_cache.dir
+/media/kibby/WorkSpace/CMPT365FinalProj/CMakeFiles/final.dir
