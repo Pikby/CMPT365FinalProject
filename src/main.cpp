@@ -25,18 +25,14 @@ int main(int argc, char** argv)
   FrameObject mainFrame("Project", video1f, video2f);
 
 
-  int curFrame = 0;
+  int curFrame = 320;
   int dist = 0;
   //Goes through frame by frame and makes the transition
-  while(dist< 1280)
-  {
-      std::cout << curFrame << "\n";
-      mainFrame.playFrame(mainFrame.getWipeFrame(curFrame,curFrame,dist,true));
-      std::cout << "Played frame\n";
-      curFrame++;
-      dist++;
 
-  }
+  Mat frame1 = mainFrame.getVidSTI(0,1280,2);
+  Mat frame2 = mainFrame.getVidSTI(0,1280,1);
+
+  mainFrame.playFrame(mainFrame.getWipeFrame(frame1,frame2));
 
 }
 
@@ -47,8 +43,8 @@ Mat FrameObject::getWipeFrame(int vid1Frame,int vid2Frame, int dist, bool startL
   Mat vid1mat;
   Mat vid2mat;
   //Extract both the frames
-  vid1mat = getVid1Frame(vid1Frame);
-  vid2mat = getVid2Frame(vid2Frame);
+  vid1mat = getVidFrame(vid1Frame,1);
+  vid2mat = getVidFrame(vid2Frame,2);
 
   if(dist >= width) dist = width-1;
   if(dist <0) dist = 0;
@@ -73,39 +69,79 @@ Mat FrameObject::getWipeFrame(int vid1Frame,int vid2Frame, int dist, bool startL
   return finalFrame;
 }
 
-//Returns the frame at a given time and makes sure its in the right resolution
-Mat FrameObject::getVid1Frame(int frame)
+// Returns a frame wipe between two defined matrices
+
+Mat FrameObject::getWipeFrame(Mat vid1mat,Mat vid2mat)
 {
-    if(frame>=vid1.get(CAP_PROP_FRAME_COUNT))
+  Mat finalFrame(height,width,vidType);
+  //Iterates through and calculates the new frame
+
+  for(int i = 0; i<width; i++)
+  {
+    for(int j = 0; j<height; j++)
     {
-      return Mat(height,width,0);
+      if(i<width/2)
+      {
+        finalFrame.at<Vec3b>(j,i) = vid2mat.at<Vec3b>(j,i);
+      }
+      else finalFrame.at<Vec3b>(j,i) = vid1mat.at<Vec3b>(j,i);
     }
-    vid1.set(CAP_PROP_POS_FRAMES, frame);
-    int curWidth = vid1.get(CAP_PROP_FRAME_WIDTH);
-    int curHeight = vid1.get(CAP_PROP_FRAME_HEIGHT);
+  }
+
+  return finalFrame;
+}
+//Returns the frame at a given time and makes sure its in the right resolution
+Mat FrameObject::getVidFrame(int frame, int vidNum)
+{
+    VideoCapture* curVid = NULL;
+    if(vidNum == 1)
+    {
+      curVid = &vid1;
+    }
+    else curVid = &vid2;
+    if(frame>=curVid->get(CAP_PROP_FRAME_COUNT))
+    {
+      return Mat(height,width,0, Scalar(0,0,0));
+    }
+    curVid->set(CAP_PROP_POS_FRAMES, frame);
+    int curWidth = curVid->get(CAP_PROP_FRAME_WIDTH);
+    int curHeight = curVid->get(CAP_PROP_FRAME_HEIGHT);
     Mat tempMat,finalMat;
     vid1 >> tempMat;
     resize(tempMat,finalMat,finalMat.size(),(double)curWidth/width, (double)curHeight/height);
     return finalMat;
 }
 
-Mat FrameObject::getVid2Frame(int frame)
+Mat FrameObject::getVidSTI(int frame, int size, int vidNumb)
 {
-    if(frame>=vid2.get(CAP_PROP_FRAME_COUNT))
+  VideoCapture* curVid = NULL;
+  if(vidNumb == 1)
+  {
+    curVid = &vid1;
+  }
+  else curVid = &vid2;
+  int totFrames = curVid->get(CAP_PROP_FRAME_COUNT);
+  if(frame+size >= totFrames) size = totFrames-frame-1;
+  Mat finalFrame(height,size,vidType);
+  curVid->set(CAP_PROP_POS_FRAMES,frame);
+
+  for(int i = 0; i< size;i++)
+  {
+    std::cout << i << "\n";
+    Mat tempFrame;
+    *curVid >> tempFrame;
+    for(int j = 0; j<height;j++)
     {
-      return Mat(height,width,0);
+      finalFrame.at<Vec3b>(j,i) = tempFrame.at<Vec3b>(j,width/2);
     }
-    vid2.set(CAP_PROP_POS_FRAMES, frame);
-    int curWidth = vid2.get(CAP_PROP_FRAME_WIDTH);
-    int curHeight = vid2.get(CAP_PROP_FRAME_HEIGHT);
-    Mat tempMat,finalMat;
-    vid2 >> tempMat;
-    resize(tempMat,finalMat,finalMat.size(),(double)curWidth/width, (double)curHeight/height);
-    return finalMat;
+  }
+  return finalFrame;
+
 }
+
 //Plays the current frame
 void FrameObject::playFrame(Mat frame)
 {
   imshow(videoName, frame);
-  waitKey(1);
+  waitKey(100*100);
 }

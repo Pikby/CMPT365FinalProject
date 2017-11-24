@@ -15,8 +15,8 @@ class FrameObject
     //Path to the second video
     std::string video2;
     //Resolution
-    double width = 1280;
-    double height = 720;
+    int width = 1280;
+    int height = 720;
     //The captures of the two videos
     VideoCapture vid1;
     VideoCapture vid2;
@@ -28,15 +28,18 @@ class FrameObject
       video2 = pathtovid2;
       vid1 = VideoCapture(pathtovid1);
       vid2 = VideoCapture(pathtovid2);
-      vidType = getVid1Frame(1).type();
+      vidType = getVidFrame(1,1).type();
     }
     void setResolution(int nWidth, int nHeight)
     {
       width = nWidth;
       height = nHeight;
     }
-    Mat getVid1Frame(int frame);
-    Mat getVid2Frame(int frame);
+    Mat getVidFrame(int frame, int vidNumb);
     Mat getWipeFrame(int vid1Frame,int vid2Frame, int dist, bool startLeft);
+    Mat getVidSTI(int frame, int size, int vidNumb);
+
+    Mat getWipeFrame(Mat vid1mat,Mat vid2mat);
+
     void playFrame(Mat frame);
 };
