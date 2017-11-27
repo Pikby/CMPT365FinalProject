@@ -15,11 +15,13 @@ class FrameObject
     //Path to the second video
     std::string video2;
     //Resolution
-    int width = 1280;
-    int height = 720;
+    int width = 100;
+    int height = 100;
     //The captures of the two videos
     VideoCapture vid1;
     VideoCapture vid2;
+    Mat normalize(Mat frame);
+
   public:
     FrameObject(std::string vidname, std::string pathtovid1, std::string pathtovid2)
     {
@@ -35,11 +37,14 @@ class FrameObject
       width = nWidth;
       height = nHeight;
     }
+    void printMat(Mat m);
+    Mat getChromacityMat(Mat frame);
+    int getL(Mat frame1, Mat frame2);
     Mat getVidFrame(int frame, int vidNumb);
     Mat getWipeFrame(int vid1Frame,int vid2Frame, int dist, bool startLeft);
-    Mat getVidSTI(int frame, int size, int vidNumb);
-
     Mat getWipeFrame(Mat vid1mat,Mat vid2mat);
+    Mat getVidCopySTI(int frame, int size, int vidNumb);
+    Mat getVidHistoSTI(int frame, int size, int vidNumb);
 
     void playFrame(Mat frame);
 };

@@ -15,6 +15,8 @@ opencv2/highgui.hpp
 -
 string
 -
+math.h
+-
 headers/main.h
 /media/kibby/WorkSpace/CMPT365FinalProj/src/headers/main.h
 
