@@ -10,129 +10,140 @@ using namespace cv;
 int main(int argc, char** argv)
 {
   std::string video1f = "";
-  std::string video2f = "";
+  std::string pathtoimage = "STI";
+  int type = -1;
+  int startFrame = -1;
+  int length = -1;
+  char savetofile = 0;
+  int width = 1040;
+  int height = 720;
 
-  //Check for two input arguments and gets their file path
-  if(argc > 1)
+  for(int curArg = 1; curArg < argc; curArg++)
   {
-    video1f = argv[1];
-  }
-
-  if(argc > 2)
-  {
-    video2f = argv[2];
-  }
-  //Create the frame class in order to calculate the wipe;
-  FrameObject mainFrame("Project", video1f, video2f);
-
-
-
-  Mat frame1 = mainFrame.getVidHistoSTI(360,400,2);
-
-  //Mat frame2 = mainFrame.getVidCopySTI(0,1280,1);
-
-  mainFrame.playFrame(frame1);
-  //mainFrame.playFrame(mainFrame.getWipeFrame(frame1,frame2));
-
-
-}
-
-//Returns the current framewipe with given parameter
-Mat FrameObject::getWipeFrame(int vid1Frame,int vid2Frame, int dist, bool startLeft)
-{
-
-  Mat vid1mat;
-  Mat vid2mat;
-  //Extract both the frames
-  vid1mat = getVidFrame(vid1Frame,1);
-  vid2mat = getVidFrame(vid2Frame,2);
-
-  if(dist >= width) dist = width-1;
-  if(dist <0) dist = 0;
-
-
-  Mat finalFrame(height,width,vidType);
-  //Iterates through and calculates the new frame
-  if(startLeft)
-  {
-    for(int i = 0; i<width; i++)
+    switch(curArg)
     {
-      for(int j = 0; j<height; j++)
-      {
-        if(i<dist)
-        {
-          finalFrame.at<Vec3b>(j,i) = vid2mat.at<Vec3b>(j,i);
-        }
-        else finalFrame.at<Vec3b>(j,i) = vid1mat.at<Vec3b>(j,i);
-      }
+      case(1): video1f = argv[curArg]; break;
+      case(2): width = std::stoi(argv[curArg]); break;
+      case(3): height = std::stoi(argv[curArg]); break;
+      case(4): type = std::stoi(argv[curArg]); break;
+      case(5): startFrame = std::stoi(argv[curArg]); break;
+      case(6): length = std::stoi(argv[curArg]); break;
+      case(7): pathtoimage = argv[curArg];
+              savetofile = 'y'; break;
     }
+
   }
-  return finalFrame;
-}
 
-// Returns a frame wipe between two defined matrices
 
-Mat FrameObject::getWipeFrame(Mat vid1mat,Mat vid2mat)
-{
-  Mat finalFrame(height,width,vidType);
-  //Iterates through and calculates the new frame
-
-  for(int i = 0; i<width; i++)
+  FrameObject mainFrame("Project", "test1.mp4");
+  while(true)
   {
-    for(int j = 0; j<height; j++)
+
+    if(video1f == "")
     {
-      if(i<width/2)
-      {
-        finalFrame.at<Vec3b>(j,i) = vid2mat.at<Vec3b>(j,i);
-      }
-      else finalFrame.at<Vec3b>(j,i) = vid1mat.at<Vec3b>(j,i);
+      std::cout << "Please input a path to file \n";
+      std::cin >> video1f;
+      mainFrame = FrameObject("Project", video1f);
     }
+    else
+    {
+      mainFrame = FrameObject("Project", video1f);
+    }
+    if(type == -1)
+    {
+
+      std::cout << "Enter type: (0 for CopySti or 1 for HistogramSti)\n";
+      std::cin >> type;
+    }
+
+    if(length == -1)
+    {
+      std::cout << "Enter length of STI (in terms of number of frames)\n";
+      std::cin >> length;
+    }
+
+    if(startFrame == -1)
+    {
+      std::cout << "Enter the frame of the video you would like to start from\n";
+      std::cin >> startFrame;
+    }
+
+    Mat frame;
+    std::cout << "Loading STI, depending on resolution this might take a while\n";
+    mainFrame.setResolution(width,height);
+    switch(type)
+    {
+      case 0:
+        frame = mainFrame.getVidCopySTI(startFrame,length);
+        break;
+      case 1:
+        frame = mainFrame.getVidHistoSTI(startFrame,length);
+        break;
+      default:
+        std::cout << "Invalid Type! \n";
+        continue;
+    }
+
+    std::cout << "STI loaded! Press 'q' to close the image\n";
+    mainFrame.playFrame(frame);
+
+    if(savetofile == 0)
+    {
+      std::cout << "Save STI to file? (y/n)\n";
+      std::cin >> savetofile;
+      if(savetofile == 'y')
+      {
+        std::cout << "Enter the filename\n";
+        std::cin >> pathtoimage;
+      }
+
+      if(savetofile != 'y' || savetofile != 'n') savetofile = 0;
+    }
+
+    if(savetofile == 'y')
+    {
+      imwrite(pathtoimage,frame);
+
+    }
+    return 1;
   }
 
-  return finalFrame;
+
 }
+
+
 //Returns the frame at a given time and makes sure its in the right resolution
-Mat FrameObject::getVidFrame(int frame, int vidNum)
+Mat FrameObject::getVidFrame(int frame)
 {
-    VideoCapture* curVid = NULL;
-    if(vidNum == 1)
-    {
-      curVid = &vid1;
-    }
-    else curVid = &vid2;
-    if(frame>=curVid->get(CAP_PROP_FRAME_COUNT))
+
+    if(frame>=vid.get(CAP_PROP_FRAME_COUNT))
     {
       return Mat(height,width,0, Scalar(0,0,0));
     }
-    curVid->set(CAP_PROP_POS_FRAMES, frame);
-    int curWidth = curVid->get(CAP_PROP_FRAME_WIDTH);
-    int curHeight = curVid->get(CAP_PROP_FRAME_HEIGHT);
+    vid.set(CAP_PROP_POS_FRAMES, frame);
+    int curWidth = vid.get(CAP_PROP_FRAME_WIDTH);
+    int curHeight = vid.get(CAP_PROP_FRAME_HEIGHT);
     Mat tempMat,finalMat;
-    *curVid >> tempMat;
+    vid >> tempMat;
     resize(tempMat,finalMat,finalMat.size(),(double)width/curWidth, (double)height/curHeight);
     return finalMat;
 }
 
-Mat FrameObject::getVidHistoSTI(int frame, int size, int vidNumb)
+Mat FrameObject::getVidHistoSTI(int frame, int size)
 {
-  VideoCapture* curVid = NULL;
-  if(vidNumb == 1)
-  {
-    curVid = &vid1;
-  }
-  else curVid = &vid2;
-  int totFrames = curVid->get(CAP_PROP_FRAME_COUNT);
+
+  int totFrames = vid.get(CAP_PROP_FRAME_COUNT);
 
   if(frame+size >= totFrames) size = totFrames-frame-1;
 
-  Mat finalFrame(width,size,CV_32FC1);
+  Mat finalFrame(width,size,CV_8UC1);
 
 
 
   for(int i = 0;i<size;i++)
   {
-    Mat frame1 = getVidFrame(frame,vidNumb);
-    Mat frame2 = getVidFrame(frame+1,vidNumb);
+    Mat frame1 = getVidFrame(frame);
+    Mat frame2 = getVidFrame(frame+1);
     for(int j = 0; j<width;j++)
     {
 
@@ -142,12 +153,11 @@ Mat FrameObject::getVidHistoSTI(int frame, int size, int vidNumb)
 
       float L = getL(hist1,hist2)/(float)width;
       //std::cout << "L=" << L << "\n";
-      finalFrame.at<float>(j,i) = L;
+      finalFrame.at<uchar>(j,i) = L*255;
     }
-    std::cout << "finished frame: " << i << "\n";
+
     frame++;
   }
-
   return finalFrame;
 
 }
@@ -236,26 +246,20 @@ int FrameObject::getL(Mat frame1, Mat frame2)
   return L;
 };
 
-Mat FrameObject::getVidCopySTI(int frame, int size, int vidNumb)
+Mat FrameObject::getVidCopySTI(int frame, int size)
 {
-  VideoCapture* curVid = NULL;
-  if(vidNumb == 1)
-  {
-    curVid = &vid1;
-  }
-  else curVid = &vid2;
-  int totFrames = curVid->get(CAP_PROP_FRAME_COUNT);
+
+  int totFrames = vid.get(CAP_PROP_FRAME_COUNT);
 
   if(frame+size >= totFrames) size = totFrames-frame-1;
 
   Mat finalFrame(height,size,vidType);
-  curVid->set(CAP_PROP_POS_FRAMES,frame);
+  vid.set(CAP_PROP_POS_FRAMES,frame);
 
   for(int i = 0; i< size;i++)
   {
-    std::cout << i << "\n";
     Mat tempFrame;
-    *curVid >> tempFrame;
+    vid >> tempFrame;
     for(int j = 0; j<height;j++)
     {
       finalFrame.at<Vec3b>(j,i) = tempFrame.at<Vec3b>(j,width/2);
@@ -284,5 +288,11 @@ void FrameObject::printMat(Mat m)
 void FrameObject::playFrame(Mat frame)
 {
   imshow(videoName, frame);
-  waitKey(100*10000);
+  char key = 0;
+  while(true)
+  {
+    key = waitKey(30);
+    if( key == 'q') break;
+  }
+  destroyAllWindows();
 }
