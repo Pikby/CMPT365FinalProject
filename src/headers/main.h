@@ -25,11 +25,7 @@ class FrameObject
     {
       videoName = vidname;
       video = pathtovid;
-
       vid = VideoCapture(pathtovid);
-
-
-
       vidType = getVidFrame(0).type();
     }
     void setResolution(int nWidth, int nHeight)
@@ -40,11 +36,17 @@ class FrameObject
     void printMat(Mat m);
     Mat getChromacityMat(Mat frame);
     int getL(Mat frame1, Mat frame2);
+    int getD(Mat frame);
     Mat getVidFrame(int frame);
-    //Mat getWipeFrame(int vid1Frame,int vid2Frame, int dist, bool startLeft);
-    //Mat getWipeFrame(Mat vid1mat,Mat vid2mat);
+
+    //Calculate the copy STI
     Mat getVidCopySTI(int frame, int size);
+    //Calculate the HistogramSTi
     Mat getVidHistoSTI(int frame, int size);
+    //Calculates the Difference STI
+    //NOT IMPLEMENTED
+    Mat getDifferenceSTI(int frame, int size);
+    Mat toLongVector(Mat frame);
 
     void playFrame(Mat frame);
 };

@@ -169,9 +169,6 @@ Mat FrameObject::getChromacityMat(Mat frame)
   int numbofbins = floor(1+log2(height));
 
   Mat outputFrame(numbofbins,numbofbins,CV_32SC1,double(0));
-
-
-
   int totalpixels = 0;
   for(int i = 0; i<width; i++)
   {
@@ -207,6 +204,53 @@ Mat FrameObject::getChromacityMat(Mat frame)
     }
   }
   return outputFrame;
+}
+Mat FrameObject::getDifferenceSTI(int frame, int size)
+{
+  int totFrames = vid.get(CAP_PROP_FRAME_COUNT);
+
+  if(frame+size >= totFrames) size = totFrames-frame-1;
+
+  Mat finalFrame(width,size,CV_8UC1);
+  for(int i = 0;i<size;i++)
+  {
+    Mat frame1 = getVidFrame(frame);
+    Mat frame2 = getVidFrame(frame+1);
+    for(int j = 0; j<width;j++)
+    {
+
+      Mat hist1 = getChromacityMat(frame1.col(j));
+      Mat hist2 = getChromacityMat(frame2.col(j));
+
+      hist1 = hist1.reshape(0,1);
+      hist2 = hist2.reshape(0,1);
+
+      Mat z = hist2-hist1;
+      double D = getD(z)/(float)width;
+      finalFrame.at<uchar>(j,i) = D*255;
+    }
+
+    frame++;
+  }
+  return finalFrame;
+}
+
+Mat FrameObject::toLongVector(Mat frame)
+{
+  std::cout << "calculating long vector \n";
+  int width = frame.cols;
+  int height = frame.rows;
+
+  Mat finalFrame(width*height,1,frame.type());
+  for(int i = 0; i<width;i++)
+  {
+    for(int j = 0; j<height;j++)
+    {
+      finalFrame.at<uchar>(j+i*width,0) = frame.at<uchar>(j,i);
+    }
+  }
+  //std::cout << finalFrame << "\n";
+  return finalFrame;
 }
 
 Mat FrameObject::normalize(Mat frame)
@@ -245,6 +289,18 @@ int FrameObject::getL(Mat frame1, Mat frame2)
   }
   return L;
 };
+
+int FrameObject::getD(Mat frame)
+{
+  int size = frame.cols;
+  int D = 0;
+  for(int i = 0; i<size;i++)
+  {
+    D += pow(frame.at<uchar>(i,0),2);
+  }
+
+  return D;
+}
 
 Mat FrameObject::getVidCopySTI(int frame, int size)
 {
